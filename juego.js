@@ -102,7 +102,7 @@ function condicionesIniciales() {
   intentos = 0;
   numeroSecreto = Math.trunc(Math.random() * 30) + 1;
   //** Importante ** Para probar mas facil y hacer trampa activar la linea de abajo
-  alert(`El numero secreto es ${numeroSecreto}`);
+  //alert(`El numero secreto es ${numeroSecreto}`);
   botonComienzo.classList.add('hidden');
   mensajeJugador.classList.add('hidden');
   campoNumero.classList.remove('hidden');
