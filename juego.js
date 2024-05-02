@@ -102,7 +102,7 @@ function condicionesIniciales() {
   intentos = 0;
   numeroSecreto = Math.trunc(Math.random() * 30) + 1;
   //** Importante ** Para probar mas facil y hacer trampa activar la linea de abajo
-  //alert(`El numero secreto es ${numeroSecreto}`);
+  alert(`El numero secreto es ${numeroSecreto}`);
   botonComienzo.classList.add('hidden');
   mensajeJugador.classList.add('hidden');
   campoNumero.classList.remove('hidden');
@@ -138,18 +138,17 @@ botonIngresarNumero.addEventListener('click', function () {
     puntajesMasaltos();
     ocultarInput();
     reiniciarJuego();
-  } else if (numeroElegido === numeroSecreto) {
+  } else if (numeroElegido === numeroSecreto && intentos < 6) {
     mensajeJugando.textContent = `Ganaste ${nombreJugador}! adivinaste en  ${intentos} intentos.`;
     puntajeGanador();
     puntajesMasaltos();
     ocultarInput();
     reiniciarJuego();
-  } else if (numeroElegido < numeroSecreto) {
+  } else if (intentos < 5 && numeroElegido < numeroSecreto) {
     mensajeJugando.textContent = `No no, ${nombreJugador} es un numero mas alto!`;
-  } else if (numeroElegido > numeroSecreto) {
+  } else if (intentos < 5 && numeroElegido > numeroSecreto) {
     mensajeJugando.textContent = `Te pasaste ${nombreJugador} es un numero menor!`;
-  }
-  if (intentos === 5) {
+  } else if (intentos === 5 && numeroElegido != numeroSecreto) {
     mensajeJugando.textContent = `Perdiste, se te acabaron los intentos, el numero secreto era: ${numeroSecreto}!`;
     puntajesMasaltos();
     ocultarInput();
