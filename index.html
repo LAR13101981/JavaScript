@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adivina el Numero</title>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Bienvenido a Adivina el Numero!</h1>
+      <h2>Reglas:</h2>
+      <ul>
+        <li>1 - Vas a tener 5 intentos para adivinar un numero secreto.</li>
+        <li>2 - El numero secreto tiene un valor entre 1 y 30.</li>
+        <li>3 - Si no adivinas vas a recibir pistas.</li>
+      </ul>
+      <div id="info-jugador">
+        <h3 id="mensaje-para-jugador"></h3>
+        <input id="nombre-jugador" min="1" max="15" />
+        <button id="ingresar-nombre">Continuar</button>
+        <button id="iniciar-juego" class="hidden">Comenzar</button>
+      </div>
+      <div id="jugando">
+        <h3 id="mensaje-para-jugador2" class="hidden"></h3>
+        <input id="elegir-numero" class="hidden" />
+        <button id="ingresar-numero" class="hidden">Ingresar</button>
+      </div>
+      <h4 id="intentos-restantes" class="hidden"></h4>
+      <button id="iniciar-juego" class="centered hidden">Comenzar</button>
+      <button id="reiniciar-juego" class="hidden">Reiniciar</button>
+    </div>
+    <div id="tabla=puntajes" class="hidden">
+      <h5>Mejores 5 jugadores!</h5>
+      <ol id="mejores-jugadores"></ol>
+    </div>
+    <script src="juego.js"></script>
+  </body>
+</html>
