@@ -15,9 +15,9 @@ const mejoresJugadores = document.getElementById('mejores-jugadores');
 
 //Definiendo un array de objetos con el nombre y el puntaje mas alto del jugador
 const listaJugadores = [
-  { nombre: 'Leandro', puntajeMasAlto: 1 },
-  { nombre: 'Luciana', puntajeMasAlto: 5 },
-  { nombre: 'Kevin', puntajeMasAlto: 4 },
+  { nombre: 'LAR', puntajeMasAlto: 1 },
+  { nombre: 'LuAL', puntajeMasAlto: 4 },
+  { nombre: 'Kevin93', puntajeMasAlto: 5 },
 ];
 
 //Clase para creer un nuevo jugador
