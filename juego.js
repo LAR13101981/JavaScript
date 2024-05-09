@@ -1,5 +1,10 @@
 'use strict';
 
+//Cambios desde la version anterior.
+//Se borro el arary hardcodeado para simular un inicio en limpio del juego sin jugadores/puntajes pre existentes.
+//Se agrego local storage del arary de jugadores para persistir datos de nombres y puntajes.
+//Se resetea el campo para ingresar un numero a vacio despues de cada intento.
+
 //Asignamando variables a los elementos a utilizar
 const campoNombreJugador = document.getElementById('nombre-jugador');
 const botonIngresarNombre = document.getElementById('ingresar-nombre');
@@ -13,14 +18,6 @@ const intentosRestantes = document.getElementById('intentos-restantes');
 const divTablaPuntajes = document.getElementById('tabla=puntajes');
 const mejoresJugadores = document.getElementById('mejores-jugadores');
 
-//Definiendo un array de objetos con el nombre y el puntaje mas alto del jugador
-const listaJugadores = [
-  { nombre: 'LAR', puntajeMasAlto: 1 },
-  { nombre: 'LuAL', puntajeMasAlto: 4 },
-  { nombre: 'Kevin93', puntajeMasAlto: 5 },
-];
-
-//Clase para creer un nuevo jugador
 class Jugador {
   constructor(nombre) {
     this.nombre = nombre;
@@ -32,6 +29,24 @@ let numeroSecreto;
 let numeroElegido;
 let nombreJugador = '';
 let intentos;
+
+//Elegi borrar el array que originalmente tenia hardcodeado y traer el que esta guardado o empezar con uno vacio al inicio del juego.
+const listaJugadores = sacarLocalStorage('jugadores') || [];
+console.log(listaJugadores);
+
+//Funcion para guardar el array de jugadores en local storage
+function guardadoLocalStorage(clave, array) {
+  localStorage.setItem(clave, JSON.stringify(array));
+}
+
+//Funcion para sacar el array de jugadores del local storage
+//Elegi borrar el array que originalmente tenia hardcodeado y empezar con algo vacio.
+function sacarLocalStorage(clave) {
+  const array = localStorage.getItem(clave);
+  //Usando el ternary operator para simplificar un if else, la primera vez que corra el juego no hay datos guardados.
+  //Se van agregando jugadores a medida que jueguen.
+  return array ? JSON.parse(array) : null;
+}
 
 //funcion para ocultar elementos del log in del jugador, y mostrando boton de comienzo
 function ocultarLogin() {
@@ -61,7 +76,7 @@ function loginJugador() {
   //Mensaje Bienvenida
   mensajeJugador.textContent = 'Hola! Para continuar ingresa tu nombre o apodo';
 
-  //tuve que investigar esto, tenia un error raro donde se ejectutaban multiples loginjugador sin el remove antes.
+  //tuve que investigar esto, tenia un bug por el event listener despues de reinciar el juego.
   botonIngresarNombre.removeEventListener('click', datosJugador);
   botonIngresarNombre.addEventListener('click', datosJugador);
 
@@ -81,6 +96,7 @@ function loginJugador() {
         //Agregando al nuevo jugador al array
         listaJugadores.push(nuevoJugador);
         mensajeJugador.textContent = `Hola ${nombreJugador} vamos a jugar, que tengas suerte!`;
+        guardadoLocalStorage('jugadores', listaJugadores);
         console.log(listaJugadores);
         //Oculando los elementos del Login
         ocultarLogin();
@@ -119,6 +135,8 @@ botonIngresarNumero.addEventListener('click', function () {
   intentosRestantes.classList.remove('hidden');
   intentosRestantes.textContent = `Tenes ${5 - intentos} intentos mas.`;
 
+  campoNumero.value = '';
+
   //Chequeando si el dato ingresado es un numero.
   if (
     isNaN(numeroElegido) ||
@@ -135,12 +153,14 @@ botonIngresarNumero.addEventListener('click', function () {
   } else if (numeroElegido === numeroSecreto && intentos === 1) {
     mensajeJugando.textContent = 'GANASTE! Le pegaste de una, es increible!';
     puntajeGanador();
+    guardadoLocalStorage('jugadores', listaJugadores);
     puntajesMasaltos();
     ocultarInput();
     reiniciarJuego();
   } else if (numeroElegido === numeroSecreto && intentos < 6) {
     mensajeJugando.textContent = `Ganaste ${nombreJugador}! adivinaste en  ${intentos} intentos.`;
     puntajeGanador();
+    guardadoLocalStorage('jugadores', listaJugadores);
     puntajesMasaltos();
     ocultarInput();
     reiniciarJuego();
@@ -168,7 +188,7 @@ function puntajeGanador() {
 function puntajesMasaltos() {
   divTablaPuntajes.classList.remove('hidden');
 
-  //Reseteando el contenido de la table.
+  //Reseteando el contenido de la tabla.
   mejoresJugadores.innerHTML = '';
 
   //Al array de jugadores le aplicamos:
