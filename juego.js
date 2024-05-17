@@ -2,7 +2,7 @@
 
 //Cambios desde la version anterior.
 //Se borro el arary hardcodeado para simular un inicio en limpio del juego sin jugadores/puntajes pre existentes.
-//Se agrego local storage del arary de jugadores para persistir datos de nombres y puntajes.
+//Se agrego local storage del array de jugadores para persistir datos de nombres y puntajes.
 //Se resetea el campo para ingresar un numero a vacio despues de cada intento.
 
 //Asignamando variables a los elementos a utilizar
