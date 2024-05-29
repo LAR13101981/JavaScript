@@ -1,9 +1,10 @@
 'use strict';
 
-//Cambios desde la version anterior.
-//Se borro el arary hardcodeado para simular un inicio en limpio del juego sin jugadores/puntajes pre existentes.
-//Se agrego local storage del array de jugadores para persistir datos de nombres y puntajes.
-//Se resetea el campo para ingresar un numero a vacio despues de cada intento.
+//Se agrego la libreria toastify para reemplzar algunos de los mensajes.
+//Se modificaron los mensajes estaticos para que tenga sentido con los mensajes de la libreria.
+//Se vacia el campo donde se ingresa el nombre del jugador al reiniciar.
+//Reemplazo de funcion de carga del array de local storage por una version asincronica con fetch de un archivo data.json local.
+//Reemplazo de funcion de guardado en local storage por una funcion que solo hace console log del estado actual del array ya que no hay backend ni DB.
 
 //Asignamando variables a los elementos a utilizar
 const campoNombreJugador = document.getElementById('nombre-jugador');
@@ -29,23 +30,27 @@ let numeroSecreto;
 let numeroElegido;
 let nombreJugador = '';
 let intentos;
+let listaJugadores = [];
 
-//Elegi borrar el array que originalmente tenia hardcodeado y traer el que esta guardado o empezar con uno vacio al inicio del juego.
-const listaJugadores = sacarLocalStorage('jugadores') || [];
-console.log(listaJugadores);
-
-//Funcion para guardar el array de jugadores en local storage
-function guardadoLocalStorage(clave, array) {
-  localStorage.setItem(clave, JSON.stringify(array));
+//Funcion asincronica de carga de array de jugadores.
+async function cargaJugadores() {
+  try {
+    const response = await fetch('data.json');
+    if (!response.ok) throw new Error('Error al cargar los jugadores');
+    const data = await response.json();
+    listaJugadores = data;
+    console.log(listaJugadores);
+  } catch (error) {
+    console.error(error);
+  }
 }
 
-//Funcion para sacar el array de jugadores del local storage
-//Elegi borrar el array que originalmente tenia hardcodeado y empezar con algo vacio.
-function sacarLocalStorage(clave) {
-  const array = localStorage.getItem(clave);
-  //Usando el ternary operator para simplificar un if else, la primera vez que corra el juego no hay datos guardados.
-  //Se van agregando jugadores a medida que jueguen.
-  return array ? JSON.parse(array) : null;
+cargaJugadores();
+
+//Funcion asincronica de guardado de array de jugadores si hubiera una base de datos y backend.
+
+async function guardadoJugadores() {
+  console.log('Saving data:', JSON.stringify(listaJugadores));
 }
 
 //funcion para ocultar elementos del log in del jugador, y mostrando boton de comienzo
@@ -78,13 +83,28 @@ function loginJugador() {
 
   //tuve que investigar esto, tenia un bug por el event listener despues de reinciar el juego.
   botonIngresarNombre.removeEventListener('click', datosJugador);
+
   botonIngresarNombre.addEventListener('click', datosJugador);
+
+  botonComienzo.addEventListener('click', function () {
+    condicionesIniciales();
+  });
 
   function datosJugador() {
     nombreJugador = campoNombreJugador.value.trim();
     //Verificando que nombre de jugador no quede vacia
     if (!nombreJugador) {
-      mensajeJugador.textContent = 'No ingresaste un nombre, proba devuelta...';
+      Toastify({
+        text: 'No ingresaste un nombre, proba devuelta...',
+        duration: 3000,
+        gravity: 'top',
+        position: 'center',
+        style: {
+          background: 'linear-gradient(to right, #d85d5d, #fa2a2a)',
+        },
+        className: 'custom-toast',
+      }).showToast();
+      //mensajeJugador.textContent = 'No ingresaste un nombre, proba devuelta...';
     } else {
       //Verificando si el jugador existe en el array
       const jugadorExistente = existeJugador(nombreJugador);
@@ -95,23 +115,39 @@ function loginJugador() {
 
         //Agregando al nuevo jugador al array
         listaJugadores.push(nuevoJugador);
-        mensajeJugador.textContent = `Hola ${nombreJugador} vamos a jugar, que tengas suerte!`;
-        guardadoLocalStorage('jugadores', listaJugadores);
+        Toastify({
+          text: `Hola ${nombreJugador} vamos a jugar, que tengas suerte!`,
+          duration: 3000,
+          gravity: 'top',
+          position: 'center',
+          style: {
+            background: 'linear-gradient(to right, #28a745, #218838)',
+          },
+          className: 'custom-toast',
+        }).showToast();
+        mensajeJugador.textContent = ``;
+        guardadoJugadores('jugadores', listaJugadores);
         console.log(listaJugadores);
         //Oculando los elementos del Login
         ocultarLogin();
       } else {
-        mensajeJugador.textContent = `Queres mejorar tu puntaje ${nombreJugador}? dale volvamos a jugar!`;
+        Toastify({
+          text: `Queres mejorar tu puntaje ${nombreJugador}? dale volvamos a jugar!`,
+          duration: 3000,
+          gravity: 'top',
+          position: 'center',
+          style: {
+            background: 'linear-gradient(to right, #17a2b8, #117a8b)',
+          },
+          className: 'custom-toast',
+        }).showToast();
+        mensajeJugador.textContent = `Presiona Comenzar para continuar!`;
         ocultarLogin();
       }
     }
     console.log(nombreJugador);
   }
 }
-
-botonComienzo.addEventListener('click', function () {
-  condicionesIniciales();
-});
 
 function condicionesIniciales() {
   //Asignando el valor a intentos
@@ -153,21 +189,41 @@ botonIngresarNumero.addEventListener('click', function () {
   } else if (numeroElegido === numeroSecreto && intentos === 1) {
     mensajeJugando.textContent = 'GANASTE! Le pegaste de una, es increible!';
     puntajeGanador();
-    guardadoLocalStorage('jugadores', listaJugadores);
+    guardadoJugadores('jugadores', listaJugadores);
     puntajesMasaltos();
     ocultarInput();
     reiniciarJuego();
   } else if (numeroElegido === numeroSecreto && intentos < 6) {
     mensajeJugando.textContent = `Ganaste ${nombreJugador}! adivinaste en  ${intentos} intentos.`;
     puntajeGanador();
-    guardadoLocalStorage('jugadores', listaJugadores);
+    guardadoJugadores('jugadores', listaJugadores);
     puntajesMasaltos();
     ocultarInput();
     reiniciarJuego();
   } else if (intentos < 5 && numeroElegido < numeroSecreto) {
-    mensajeJugando.textContent = `No no, ${nombreJugador} es un numero mas alto!`;
+    Toastify({
+      text: `No no, ${nombreJugador} es un numero mas alto!`,
+      duration: 2500,
+      gravity: 'center',
+      position: 'center',
+      className: 'custom-toast',
+      style: {
+        background: 'linear-gradient(to right, #d85d5d, #fa2a2a)',
+      },
+    }).showToast();
+    //mensajeJugando.textContent = `No no, ${nombreJugador} es un numero mas alto!`;
   } else if (intentos < 5 && numeroElegido > numeroSecreto) {
-    mensajeJugando.textContent = `Te pasaste ${nombreJugador} es un numero menor!`;
+    Toastify({
+      text: `Te pasaste ${nombreJugador} es un numero menor!`,
+      duration: 2500,
+      gravity: 'center',
+      position: 'center',
+      style: {
+        background: 'linear-gradient(to right, #d85d5d, #fa2a2a)',
+      },
+      className: 'custom-toast',
+    }).showToast();
+    //mensajeJugando.textContent = `Te pasaste ${nombreJugador} es un numero menor!`;
   } else if (intentos === 5 && numeroElegido != numeroSecreto) {
     mensajeJugando.textContent = `Perdiste, se te acabaron los intentos, el numero secreto era: ${numeroSecreto}!`;
     puntajesMasaltos();
@@ -205,7 +261,6 @@ function puntajesMasaltos() {
         mejoresJugadores.appendChild(nuevaLista);
       }
     });
-  //console.log(JSON.stringify(jugadoresPorPuntaje));
 }
 
 //Funcion de reseteo, reiniciar condiciones iniciales.
@@ -214,7 +269,9 @@ function reiniciarJuego() {
     botonReinicio.classList.add('hidden');
     mensajeJugando.classList.add('hidden');
     mensajeJugador.classList.remove('hidden');
+    mensajeJugador.textContent = 'Volve a ingresar tu nombre o apodo';
     campoNombreJugador.classList.remove('hidden');
+    campoNombreJugador.value = '';
     botonIngresarNombre.classList.remove('hidden');
     divTablaPuntajes.classList.add('hidden');
   });
