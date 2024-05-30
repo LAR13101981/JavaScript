@@ -1,12 +1,11 @@
 'use strict';
-
 //Se agrego la libreria toastify para reemplzar algunos de los mensajes.
 //Se modificaron los mensajes estaticos para que tenga sentido con los mensajes de la libreria.
 //Se vacia el campo donde se ingresa el nombre del jugador al reiniciar.
-//Reemplazo de funcion de carga del array de local storage por una version asincronica con fetch de un archivo data.json local.
-//Reemplazo de funcion de guardado en local storage por una funcion que solo hace console log del estado actual del array ya que no hay backend ni DB.
+//Se sumo la funcion asincronica de carga datos con fetch de un archivo data.json local en caso de que no haya datos en local storage(EL inicio del juego)
+//Se agrego a la funcion de guardado en local storage un display en consola del array de jugadores actualizado.
 
-//Asignamando variables a los elementos a utilizar
+//Asignando variables a los elementos a utilizar
 const campoNombreJugador = document.getElementById('nombre-jugador');
 const botonIngresarNombre = document.getElementById('ingresar-nombre');
 const mensajeJugador = document.getElementById('mensaje-para-jugador');
@@ -19,12 +18,14 @@ const intentosRestantes = document.getElementById('intentos-restantes');
 const divTablaPuntajes = document.getElementById('tabla=puntajes');
 const mejoresJugadores = document.getElementById('mejores-jugadores');
 
+//Clase jugador
 class Jugador {
   constructor(nombre) {
     this.nombre = nombre;
     this.puntajeMasAlto = 6;
   }
 }
+
 //Definiendo variables globales
 let numeroSecreto;
 let numeroElegido;
@@ -32,25 +33,31 @@ let nombreJugador = '';
 let intentos;
 let listaJugadores = [];
 
-//Funcion asincronica de carga de array de jugadores.
+//Funcion de carga de datos de jugadores, chequea si hay datos en local storage y sino corre la funcion que hace fetch desde el archivo data.json.
+async function cargaLocalStorage() {
+  const datosGuardados = localStorage.getItem('listaJugadores');
+  listaJugadores = datosGuardados
+    ? JSON.parse(datosGuardados)
+    : await cargaJugadores();
+}
+
+//Funcion asincronica de carga de array de jugadores(solo lo hace la primera vez que se corre el juego ya que no hay datos en localstorage)
 async function cargaJugadores() {
   try {
     const response = await fetch('data.json');
     if (!response.ok) throw new Error('Error al cargar los jugadores');
-    const data = await response.json();
-    listaJugadores = data;
-    console.log(listaJugadores);
+    const datos = await response.json();
+    console.log(datos);
+    return datos;
   } catch (error) {
     console.error(error);
   }
 }
 
-cargaJugadores();
-
-//Funcion asincronica de guardado de array de jugadores si hubiera una base de datos y backend.
-
+//Funcion asincronica de guardado de array de jugadores en local storage y display por consola.
 async function guardadoJugadores() {
   console.log('Saving data:', JSON.stringify(listaJugadores));
+  localStorage.setItem('listaJugadores', JSON.stringify(listaJugadores));
 }
 
 //funcion para ocultar elementos del log in del jugador, y mostrando boton de comienzo
@@ -80,6 +87,8 @@ function existeJugador(nombreJugador) {
 function loginJugador() {
   //Mensaje Bienvenida
   mensajeJugador.textContent = 'Hola! Para continuar ingresa tu nombre o apodo';
+
+  cargaLocalStorage();
 
   //tuve que investigar esto, tenia un bug por el event listener despues de reinciar el juego.
   botonIngresarNombre.removeEventListener('click', datosJugador);
@@ -163,6 +172,52 @@ function condicionesIniciales() {
   mensajeJugando.textContent = `${nombreJugador} Ingresa un numero con un valor entre 1 y 30`;
 }
 
+//funcion que cambia elpuntaje mas alto si es mejorado.
+function puntajeGanador() {
+  const jugadorExistente = existeJugador(nombreJugador);
+  if (jugadorExistente.puntajeMasAlto >= intentos) {
+    jugadorExistente.puntajeMasAlto = intentos;
+  }
+}
+
+//Funcion para la creacion de la tabla de mejores jugadores
+function puntajesMasaltos() {
+  divTablaPuntajes.classList.remove('hidden');
+
+  //Reseteando el contenido de la tabla.
+  mejoresJugadores.innerHTML = '';
+
+  //Al array de jugadores le aplique:
+  //Sort para ordenar por puntaje ascendiente
+  //Slice para dejar solo los primero 5 elementos en caso de que el array tenga mas de 5 jugadores.
+  //for each para crear un elemento lista con cada jugador.
+  const jugadoresPorPuntaje = listaJugadores
+    .sort((a, b) => a.puntajeMasAlto - b.puntajeMasAlto)
+    .slice(0, 5)
+    .forEach((jugador) => {
+      if (jugador.puntajeMasAlto <= 5) {
+        const nuevaLista = document.createElement('li');
+        nuevaLista.textContent = `${jugador.nombre} acerto en ${jugador.puntajeMasAlto} intentos`;
+        mejoresJugadores.appendChild(nuevaLista);
+      }
+    });
+}
+
+//Funcion de reseteo, reiniciar condiciones iniciales.
+function reiniciarJuego() {
+  botonReinicio.addEventListener('click', function () {
+    botonReinicio.classList.add('hidden');
+    mensajeJugando.classList.add('hidden');
+    mensajeJugador.classList.remove('hidden');
+    mensajeJugador.textContent = 'Volve a ingresar tu nombre o apodo';
+    campoNombreJugador.classList.remove('hidden');
+    campoNombreJugador.value = '';
+    botonIngresarNombre.classList.remove('hidden');
+    divTablaPuntajes.classList.add('hidden');
+  });
+}
+
+//Evento que se ejecuta al efectuar el ingreso del numero
 botonIngresarNumero.addEventListener('click', function () {
   intentos++;
 
@@ -231,50 +286,5 @@ botonIngresarNumero.addEventListener('click', function () {
     reiniciarJuego();
   }
 });
-
-//funcion que cambia elpuntaje mas alto si es mejorado.
-function puntajeGanador() {
-  const jugadorExistente = existeJugador(nombreJugador);
-  if (jugadorExistente.puntajeMasAlto >= intentos) {
-    jugadorExistente.puntajeMasAlto = intentos;
-  }
-}
-
-//Funcion para la creacion de la tabla de mejores jugadores
-function puntajesMasaltos() {
-  divTablaPuntajes.classList.remove('hidden');
-
-  //Reseteando el contenido de la tabla.
-  mejoresJugadores.innerHTML = '';
-
-  //Al array de jugadores le aplicamos:
-  //Sort para ordenar por puntaje ascendiente
-  //Slice para dejar solo los primero 5 elementos en caso de que el array tenga mas de 5 jugadores.
-  //for each para crear un elemento lista con cada jugador.
-  const jugadoresPorPuntaje = listaJugadores
-    .sort((a, b) => a.puntajeMasAlto - b.puntajeMasAlto)
-    .slice(0, 5)
-    .forEach((jugador) => {
-      if (jugador.puntajeMasAlto <= 5) {
-        const nuevaLista = document.createElement('li');
-        nuevaLista.textContent = `${jugador.nombre} acerto en ${jugador.puntajeMasAlto} intentos`;
-        mejoresJugadores.appendChild(nuevaLista);
-      }
-    });
-}
-
-//Funcion de reseteo, reiniciar condiciones iniciales.
-function reiniciarJuego() {
-  botonReinicio.addEventListener('click', function () {
-    botonReinicio.classList.add('hidden');
-    mensajeJugando.classList.add('hidden');
-    mensajeJugador.classList.remove('hidden');
-    mensajeJugador.textContent = 'Volve a ingresar tu nombre o apodo';
-    campoNombreJugador.classList.remove('hidden');
-    campoNombreJugador.value = '';
-    botonIngresarNombre.classList.remove('hidden');
-    divTablaPuntajes.classList.add('hidden');
-  });
-}
 
 loginJugador();
